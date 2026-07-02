@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>Cyber Simon</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0f0c1b; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; user-select: none; color: #fff; padding: 10px; transition: .3s; overflow: hidden; }
+        body.p { animation: f .5s infinite alternate; }
+        @keyframes f { 0% { box-shadow: inset 0 0 30px rgba(255,42,109,.2); background: #120510; } 100% { box-shadow: inset 0 0 80px rgba(255,42,109,.6); background: #1c0312; } }
+        .g { background: #151226; padding: 15px; border-radius: 16px; text-align: center; width: 100%; max-width: 380px; border: 1px solid #2a244d; position: relative; }
+        .h { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px; border-bottom: 2px dashed #2a244d; padding-bottom: 10px; gap: 5px; }
+        .sh { display: flex; justify-content: space-between; font-size: 11px; color: #8a81b5; margin-top: 6px; align-items: center; }
+        .gd { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; width: 100%; aspect-ratio: 1; transition: .3s; }
+        .gd.ps { opacity: 0.05; pointer-events: none; }
+        .b { border-radius: 12px; cursor: pointer; transition: .1s; opacity: .25; border: 2px solid #2a244d; -webkit-tap-highlight-color: transparent; position: relative; }
+        .b.a { opacity: 1; box-shadow: 0 0 25px var(--c); border-color: #fff; }
+        /* Элемент неоновой графики внутри кнопок */
+        .b::after { content: ''; position: absolute; top: 10%; left: 10%; width: 80%; height: 80%; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.15); pointer-events: none; }
+        #b0 { --c: #ff2a6d; background: linear-gradient(135deg, #ff2a6d, #9a0036); }
+        #b1 { --c: #00f0ff; background: linear-gradient(135deg, #00f0ff, #006b75); }
+        #b2 { --c: #ffee00; background: linear-gradient(135deg, #ffee00, #887f00); }
+        #b3 { --c: #2ecc71; background: linear-gradient(135deg, #2ecc71, #146132); }
+        button { background: #ff2a5f; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        button.p-btn { background: #00f0ff; color: #0f0c1b; }
+        .w { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(21,18,38,.96); border-radius: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; opacity: 0; pointer-events: none; transition: .5s; z-index: 20; padding: 20px; }
+        .w.a { opacity: 1; pointer-events: auto; animation: wG 1.5s infinite alternate; }
+        @keyframes wG { 0% { box-shadow: 0 0 20px rgba(0,240,255,.2); } 100% { box-shadow: 0 0 40px rgba(0,240,255,.6); } }
+    </style>
+</head>
+<body>
+    <div class="g">
+        <!-- Экран триумфа и поздравления -->
+        <div class="w" id="ws">
+            <div style="font-size:28px;color:#00f0ff;text-shadow:0 0 15px #00f0ff;font-weight:bold">🏆 НЕВЕРОЯТНО!</div>
+            <div style="font-size:14px;color:#8a81b5;line-height:1.4;max-width:280px">Поздравляем! Ваша память превзошла ИИ! Сектор Саймона полностью зачищен на всех 5 уровнях. Протокол взлома успешно завершен!</div>
+            <button onclick="document.getElementById('ws').classList.remove('a');reset()" style="padding:10px 20px;background:#00f0ff;color:#0f0c1b;font-size:14px">Играть заново</button>
+        </div>
+        <div class="h">
+            <span>Ур: <span id="lv" style="background:#00f0ff;color:#0f0c1b;padding:2px 5px;border-radius:4px">1</span></span>
+            <span id="st" style="color:#00f0ff">Стоп</span>
+            <div style="display:flex;gap:5px;"><button id="pb" class="p-btn" onclick="tgP()">Пауза</button><button onclick="st()">Старт</button></div>
+        </div>
+        <div class="sh"><span id="br">Рекорд: Ур 1</span><label style="color:#ff2a5f;font-weight:bold;cursor:pointer"><input type="checkbox" id="hc"> HARDCORE</label><span id="td">⏱️ 3.0с</span></div>
+        <div class="gd" id="grid"><div class="b" id="b0" onclick="k(0)"></div><div class="b" id="b1" onclick="k(1)"></div><div class="b" id="b2" onclick="k(2)"></div><div class="b" id="b3" onclick="k(3)"></div></div>
+    </div>
+    <script>
+        let seq=[],uSeq=[],lvl=1,au=null,lk=!1,t=0,tmr=null,bRec=1,spd=600,ps=!1;
+        const freqs=[261.6, 329.6, 392.0, 523.3],cf=[4,5,6,7,8];
+        const snd=(f,d=0.2,type='sine')=>{
+            if(!au)au=new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();
+            try{const o=au.createOscillator(),g=au.createGain();o.type=type;o.connect(g);g.connect(au.destination);o.frequency.setValueAtTime(f,au.currentTime);g.gain.setValueAtTime(0.04,au.currentTime);o.start();o.stop(au.currentTime+d)}catch(e){}
+        };
+        const rec=()=>{bRec=parseInt(localStorage.getItem('si_tl'))||1;document.getElementById('br').innerText=`Рекорд: Ур ${bRec}`};
+        const save=()=>{if(lvl>bRec){localStorage.setItem('si_tl',lvl);rec()}};
+        const flash=i=>{const btn=document.getElementById(`b${i}`);btn.classList.add('a');snd(freqs[i]);setTimeout(()=>btn.classList.remove('a'),spd*0.7)};
+        function playSeq(){
+            lk=!0;document.getElementById('st').innerText='Смотри...';let i=0;
+            const sTmr=setInterval(()=>{if(ps)return;flash(seq[i++]);if(i>=seq.length){clearInterval(sTmr);setTimeout(()=>{lk=!1;uSeq=[];document.getElementById('st').innerText='Повторяй!';rTmr()},spd*0.8)}},spd);
+        }
+        function rTmr() {
+            clearInterval(tmr);t=30;document.body.className='';
+            tmr=setInterval(() => {
+                if(ps||lk)return;t--;document.getElementById('td').innerText=`⏱️ ${(t/10).toFixed(1)}с`;
+                if(t<=10)document.body.className='p';
+                if(t<=0){clearInterval(tmr);document.body.className='';snd(120,0.4,'sawtooth');alert('💀 Время вышло!');reset();}
+            },100);
+        }
+        function tgP(){
+            if(seq.length===0)return;ps=!ps;const btn=document.getElementById('pb'),g=document.getElementById('grid');
+            if(ps){btn.innerText='Старт';btn.style.background='#2ecc71';g.classList.add('ps');}
+            else{btn.innerText='Пауза';btn.style.background='#00f0ff';g.classList.remove('ps');if(au&&au.state==='suspended')au.resume();}
+        }
+        function k(i){
+            if(lk||ps||seq.length===0)return;clearInterval(tmr);document.body.className='';flash(i);uSeq.push(i);
+            if(uSeq[uSeq.length-1]!==seq[uSeq.length-1]){snd(150,0.4,'sawtooth');alert('❌ Сбой матрицы!');return reset()}
+            if(uSeq.length===seq.length){
+                lk=!0;
+                if(seq.length>=cf[lvl-1]){
+                    if(lvl>=5){snd(523,0.1);setTimeout(()=>snd(659,0.1),100);setTimeout(()=>snd(784,0.3),200);save();return document.getElementById('ws').classList.add('a');}
+                    lvl++;save();alert(`Уровень ${lvl-1} пройден! Скорость повышена.`);seq=[];spd=Math.max(250,600-(lvl*55));
+                }
+                setTimeout(()=>{
+                    if(document.getElementById('hc').checked){seq=[];for(let j=0;j<uSeq.length+1;j++)seq.push(Math.floor(Math.random()*4));}
+                    else{seq.push(Math.floor(Math.random()*4));}playSeq()
+                },1000);
+            }else{rTmr()}
+        }
+        function reset(){lvl=1;seq=[];uSeq=[];spd=600;ps=!1;document.getElementById('lv').innerText=1;document.getElementById('td').innerText='⏱️ 3.0с';document.getElementById('st').innerText='Стоп';document.getElementById('pb').innerText='Пауза';document.getElementById('pb').style.background='#00f0ff';document.getElementById('grid').classList.remove('ps');}
+        function st(){reset();rec();setTimeout(()=>{seq.push(Math.floor(Math.random()*4));playSeq()},500)}
+        rec();
+    </script>
+</body>
+</html>
